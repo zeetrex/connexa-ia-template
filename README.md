@@ -5,23 +5,36 @@ con arquitectura vertical-hexagonal por módulo: Vite + React + Express + TypeSc
 organizado en módulos autocontenidos (`ports/domain/infra/api`), con bajo acoplamiento y dirección de
 dependencias entre módulos verificados por código, no sólo por convención escrita.
 
-**Este repo no es una app.** No compila, no corre, no tiene código TS/React real. Es una especificación —
-documentos que describen exactamente qué generar y cómo. El código real se genera **instanciando** este
-spec con los valores de un proyecto concreto, en un repo nuevo.
+**Este repo no es una app en sí mismo** — no tiene `package.json` en la raíz, no se instala ni se corre
+acá. Pero `templates/scaffold/` sí es código real (TS/React completo, no prosa ni pseudocódigo): es la
+fuente literal que se copia a cada proyecto instanciado, con placeholders `{{...}}` sin resolver.
+Instanciar un proyecto nuevo es `node scripts/instantiate.mjs <nombre>` — copia `templates/scaffold/` y
+sustituye los placeholders de forma determinística, sin que un agente tenga que leer `plan.md` y retipear
+nada (ver "Cómo instanciar" más abajo).
 
 Es autocontenido: no requiere conocer ningún otro proyecto para entenderse ni para instanciarse. Toda
-decisión de diseño está justificada en `spec.md`/`plan.md` por su mérito técnico — se puede llevar a
-cualquier entorno y usarlo sin contexto adicional.
+decisión de diseño está justificada en `spec.md`/`plan.md`/`requirements.md` por su mérito técnico — se
+puede llevar a cualquier entorno y usarlo sin contexto adicional.
 
 ## Qué hay acá
 
 ```
 connexa-ia-template/
 ├── README.md                                  ← este archivo
+├── scripts/
+│   └── instantiate.mjs                         ← instanciación determinística (copia + sustituye placeholders)
+├── templates/scaffold/                         ← código real y literal (81 archivos), fuente de verdad
+│   ├── server/, src/, api/                      ← backend (capas), frontend, entrypoint serverless
+│   ├── package.json, tsconfig*.json, etc.       ← config del proyecto instanciado
+│   ├── requirements.md, CLAUDE.md, AGENTS.md    ← se copian tal cual a cada instancia
+│   ├── templates/                               ← los 7 artefactos SDD para specs futuros (002+)
+│   └── specs/001-scaffold-inicial/              ← spec/plan/tasks que le tocan a cada instancia
 └── specs/001-scaffold-inicial/
     ├── spec.md                                 ← QUÉ y POR QUÉ (requisitos, alcance, criterios de aceptación)
-    ├── plan.md                                 ← CÓMO (arquitectura, código completo capa por capa, convenciones)
-    └── tasks.md                                ← checklist ejecutable, con IDs y dependencias entre tareas
+    ├── plan.md                                 ← decisiones técnicas + tabla archivo→propósito — el código
+    │                                              en sí vive en templates/scaffold/, no está embebido acá
+    └── tasks.md                                ← checklist de validación (instanciar, probar, reportar) —
+                                                    escribir código ya no es una tarea, es un paso del script
 ```
 
 ## Sobre la convención SDD (`spec.md`/`plan.md`/`tasks.md`)
@@ -34,13 +47,16 @@ código fuente completo**, remitiendo si hace falta a artefactos de diseño sepa
 `contracts/`); y `tasks.md` rompe esas decisiones en tareas ejecutables, que es donde recién se escribe el
 código real, tarea por tarea.
 
-**El `plan.md` de `001-scaffold-inicial` (el único spec de este repo) es una excepción deliberada a esa
-convención** — trae código fuente completo, capa por capa, en vez de sólo decisiones. El motivo: este spec
-no describe una feature con criterio de diseño para ejercer durante la ejecución — describe un scaffold,
-cuyo objetivo es reproducirse exactamente igual en cada instanciación. El código *es* la decisión; no hay
-margen que dejarle al agente ejecutor. Esta excepción está acotada a este spec — `requirements.md` §2 deja
-asentado que **todo spec posterior, en el proyecto que resulte de instanciar este scaffold, sigue el
-estándar real de spec-kit**, sin código embebido en `plan.md`.
+**`001-scaffold-inicial` (el único spec de este repo) es una excepción deliberada a esa convención** — no
+describe una feature con criterio de diseño para ejercer durante la ejecución, describe un scaffold, cuyo
+objetivo es reproducirse exactamente igual en cada instanciación. El código *es* la decisión; no hay margen
+que dejarle al agente ejecutor. Hoy esa excepción vive como un árbol de archivos real (`templates/scaffold/`,
+código fuente completo, capa por capa, con placeholders `{{...}}` sin resolver) en vez de código embebido
+dentro de `plan.md` — `plan.md` se queda en decisiones + una tabla archivo→propósito que apunta ahí, y la
+instanciación es `node scripts/instantiate.mjs <nombre>`, no un agente leyendo `plan.md` y retipeando
+código. Esta excepción está acotada a este spec — `requirements.md` §2 deja asentado que **todo spec
+posterior, en el proyecto que resulte de instanciar este scaffold, sigue el estándar real de spec-kit**,
+sin código embebido en `plan.md` ni un `templates/scaffold/` propio.
 
 Referencias:
 - [github/spec-kit](https://github.com/github/spec-kit) — repositorio y CLI.
@@ -339,46 +355,3 @@ reescribe el spec `001`. Ejemplos típicos:
 - **Módulos de dominio reales adicionales**, más allá del ejemplo genérico — siguiendo el mismo patrón de
   capas, con TDD desde el primer requisito y verificados por `module-boundaries.test.ts` como cualquier
   otro módulo.
-
-## Aprendizajes de la primera instanciación real
-
-Primera instanciación real: `connexa-ia-test`, 2026-08-28, contra una Postgres 16 local (Docker). Resultado
-general: el scaffold se instanció y validó de punta a punta sin necesidad de inventar decisiones de diseño
-— todo lo que hacía falta estaba resuelto en `spec.md`/`plan.md`. Un solo bug real de código encontrado,
-ya corregido acá.
-
-- **Bug real en `plan.md` §10.4, ya corregido**: `src/App.tsx` tipaba `children` de `AuthGate` como
-  requerido (`{ children: React.ReactNode }`), pero el propio `plan.md` lo usa con sólo un comentario JSX
-  adentro (el placeholder de rutas/nav real) — que no cuenta como children en tiempo de compilación. El
-  build normal (`npm run build`, que usa `tsc -b --noCheck`) no lo detecta; sólo lo encuentra `npx tsc
-  --noEmit` (el chequeo estricto que T065 pide correr aparte, justamente para esto). Corregido a
-  `children?: React.ReactNode` en `plan.md` §10.4 — cualquier instanciación a partir de esta versión ya
-  sale sin el bug.
-- **T045–T049 (verificación HTTP) con matiz**: `npm run server` y el ciclo completo de `/api/admin/roles`
-  y `/api/{{EXAMPLE_MODULE_PATH}}` se pudieron verificar de punta a punta por HTTP real generando un token
-  de sesión válido a mano con `signSession()` (la misma función que usa el login real) en vez de esperar
-  credenciales OAuth de Google. Lo único que **no** se pudo ejercitar por HTTP real fue la llamada a
-  `googleClient.verifyIdToken()` en sí (`POST /api/auth/google`) — verifica la firma contra los servidores
-  reales de Google, no falsificable con `jsonwebtoken` suelto ni con un token armado a mano. La lógica de
-  bootstrap que ese endpoint invoca (primer usuario → `active` + `Admin`, siguientes → inactivos) sí quedó
-  cubierta, tanto por los tests de integración (`login.pg.test.ts`) como por una ejecución manual directa
-  de los mismos repositorios contra Postgres real. Si en algún momento se quiere cerrar ese último gap sin
-  depender de credenciales reales, la opción es agregar un modo de test que inyecte un
-  `OAuth2Client`/verificador falso — no incluido en esta v1, candidato a spec de seguimiento si hace
-  falta un día.
-- **Contenedor Postgres reusado entre instanciaciones**: al reusar un contenedor Docker de una
-  instanciación anterior (mismo nombre, mismo `POSTGRES_DB`), `npm run migrate` respondió "No migrations
-  to run!" — confirma que las migraciones son idempotentes como se documentaba, pero también dejó datos de
-  prueba de la corrida anterior (usuarios, un rol extra) en las tablas. Antes de verificar el criterio de
-  aceptación 3 de `spec.md` ("primer usuario de una base vacía") hubo que limpiar esas tablas a mano
-  (`TRUNCATE app_user CASCADE` + borrar roles no protegidos). No es un bug del scaffold — es una
-  consecuencia esperable de reusar infraestructura entre corridas de verificación manual, documentada acá
-  para la próxima vez.
-- **Todo lo demás salió tal cual documentado, sin ambigüedad**: los 7 archivos de bootstrap del §12
-  (`src/main.tsx`, `src/index.css`, `src/vite-env.d.ts`, `tsconfig.json` frontend, `vite.config.ts`,
-  `index.html`, `.gitignore`) ya estaban completos en `plan.md` — nada que inventar. Los 7 primitivos de
-  shadcn/ui (§10.1) se escribieron a mano siguiendo el código fuente público de la librería, como indica
-  el propio `plan.md` para el caso "agente sin humano contestando el wizard" — funciona igual que el
-  resultado de `npx shadcn@latest add`. El catálogo de 11 permisos (7 de auth + 4 del módulo de ejemplo) y
-  los 14 tests automáticos (9 unitarios + 5 de integración, dos corridas seguidas sin residuo de
-  `SAVEPOINT`) coincidieron exactamente con lo que `tasks.md` esperaba.
