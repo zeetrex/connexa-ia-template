@@ -187,6 +187,74 @@ empezada.
 
 Ver `spec.md` §3 para el detalle completo de qué queda afuera y por qué.
 
+## Cómo instanciar un proyecto nuevo
+
+Instanciar es `node scripts/instantiate.mjs <nombre-proyecto>` — copia `templates/scaffold/` y sustituye
+los placeholders de forma determinística, sin que un agente tenga que leer `plan.md` y retipear código.
+
+Prompt para pasarle a un agente con acceso a este scaffold — el nombre del proyecto va **una sola vez**,
+reemplazando `<nombre-proyecto-kebab-case>` en el segundo párrafo:
+
+```
+Usá connexa-ia-template para instanciar un proyecto nuevo.
+
+Nombre del proyecto ({{PROJECT_NAME}}, kebab-case, fijo — no me
+preguntes por él): <nombre-proyecto-kebab-case>
+
+Todo lo demás (catálogo completo en plan.md §0) se resuelve solo a
+partir de ese nombre: {{PROJECT_NAME_PASCAL}}/{{PROJECT_NAME_TITLE}}/
+{{DB_SCHEMA}}/{{DATABASE_NAME}} derivados; puertos fijos (5000/3001, no
+placeholder); ALLOWED_EMAIL_DOMAINS con default ['zeetrex.com'] (se pisa
+con --allowed-domains si el proyecto necesita otro dominio); módulo de
+ejemplo con default "example" (se pisa con --example-module si me decís
+la entidad real del proyecto ahora).
+
+1. Corré `node scripts/instantiate.mjs {{PROJECT_NAME}}` — genera el
+   proyecto completo (código + specs/001-scaffold-inicial/{spec,plan,
+   tasks}.md, CLAUDE.md/AGENTS.md/requirements.md, templates/) en un
+   directorio nuevo, con los placeholders resueltos. Confirmá que
+   terminó sin reportar ningún placeholder pendiente, y que
+   requirements.md incluye íntegra la sección de bajo acoplamiento y
+   dirección de dependencias entre módulos (§4).
+2. Corré npm install + npm test y confirmá que los tests unitarios pasan
+   sin necesidad de Postgres, incluido module-boundaries.test.ts —
+   verificá que ese test realmente detecta una violación real, no sólo
+   que corre.
+3. Verificá si hay una Postgres alcanzable (Node 20+, DATABASE_URL
+   resuelve). Si la hay: migrá, levantá el server, y validá a mano el
+   ciclo completo de auth (bootstrap, segundo usuario inactivo, ABM de
+   roles con protección/conflicto) y del módulo de ejemplo — sin pausar
+   a preguntarme, es un schema propio de un proyecto recién creado, sin
+   nada en riesgo. Si no la hay: no lo intentes, marcá esas tareas como
+   pendientes por ausencia de Postgres y seguí con el resto.
+4. Si encontrás algún bug real en el camino (con o sin Postgres),
+   corregilo en el código generado y avisame — yo le paso el reporte al
+   administrador de connexa-ia-template. No corrijas vos
+   connexa-ia-template (specs/001-scaffold-inicial/{spec,plan,tasks}.md
+   ni templates/scaffold/, la fuente) — es una decisión que reviso yo
+   antes de que se propague a la próxima instanciación.
+5. Marcá tasks.md con el resultado real de cada tarea (no asumas nada
+   como hecho sin haberlo corrido; lo que quedó pendiente por falta de
+   Postgres, marcalo como tal, no como hecho) y dejame un resumen de qué
+   quedó validado y qué sigue pendiente.
+
+No hagas commit de nada — dejalo en el working tree para que lo revise
+antes.
+```
+
+## Compatibilidad multi-agente
+
+Este scaffold está pensado para que lo instancien y ejecuten personas distintas desde herramientas
+distintas — no sólo Claude Code. Por eso el prompt de instanciación genera siempre `CLAUDE.md` +
+`AGENTS.md` + `requirements.md` en el proyecto resultante (`plan.md` §11):
+
+- **Claude Code** lee `CLAUDE.md` garantizado.
+- **GitHub Copilot coding agent** (web) lee `AGENTS.md` (el más cercano en el árbol), y también soporta un
+  `CLAUDE.md` de raíz directamente — confirmado contra la documentación oficial de GitHub, 2026-08-27.
+- Ambos terminan leyendo el mismo `requirements.md` — la única fuente de los acuerdos fundamentales
+  (hosting, SDD, TDD, arquitectura, bajo acoplamiento entre módulos, Gitflow), sin que ningún agente reciba
+  una versión distinta.
+
 ## Tests de integración: limitación real en GitHub Copilot coding agent
 
 Los tests de integración (`*.pg.test.ts`) sólo corren si hay una Postgres real alcanzable en
@@ -256,74 +324,6 @@ otra cosa se ignora), y `services` es el mecanismo real de GitHub Actions para d
 Postgres corriendo en paralelo. Lo que **no** se pudo confirmar contra la documentación: si ese contenedor
 sigue vivo y alcanzable durante la sesión de trabajo del agente después de que termina el job de setup, o
 sólo durante el job mismo — es la duda real que queda pendiente de validar a mano.
-
-## Cómo instanciar un proyecto nuevo
-
-Instanciar es `node scripts/instantiate.mjs <nombre-proyecto>` — copia `templates/scaffold/` y sustituye
-los placeholders de forma determinística, sin que un agente tenga que leer `plan.md` y retipear código.
-
-Prompt para pasarle a un agente con acceso a este scaffold — el nombre del proyecto va **una sola vez**,
-reemplazando `<nombre-proyecto-kebab-case>` en el segundo párrafo:
-
-```
-Usá connexa-ia-template para instanciar un proyecto nuevo.
-
-Nombre del proyecto ({{PROJECT_NAME}}, kebab-case, fijo — no me
-preguntes por él): <nombre-proyecto-kebab-case>
-
-Todo lo demás (catálogo completo en plan.md §0) se resuelve solo a
-partir de ese nombre: {{PROJECT_NAME_PASCAL}}/{{PROJECT_NAME_TITLE}}/
-{{DB_SCHEMA}}/{{DATABASE_NAME}} derivados; puertos fijos (5000/3001, no
-placeholder); ALLOWED_EMAIL_DOMAINS con default ['zeetrex.com'] (se pisa
-con --allowed-domains si el proyecto necesita otro dominio); módulo de
-ejemplo con default "example" (se pisa con --example-module si me decís
-la entidad real del proyecto ahora).
-
-1. Corré `node scripts/instantiate.mjs {{PROJECT_NAME}}` — genera el
-   proyecto completo (código + specs/001-scaffold-inicial/{spec,plan,
-   tasks}.md, CLAUDE.md/AGENTS.md/requirements.md, templates/) en un
-   directorio nuevo, con los placeholders resueltos. Confirmá que
-   terminó sin reportar ningún placeholder pendiente, y que
-   requirements.md incluye íntegra la sección de bajo acoplamiento y
-   dirección de dependencias entre módulos (§4).
-2. Corré npm install + npm test y confirmá que los tests unitarios pasan
-   sin necesidad de Postgres, incluido module-boundaries.test.ts —
-   verificá que ese test realmente detecta una violación real, no sólo
-   que corre.
-3. Verificá si hay una Postgres alcanzable (Node 20+, DATABASE_URL
-   resuelve). Si la hay: migrá, levantá el server, y validá a mano el
-   ciclo completo de auth (bootstrap, segundo usuario inactivo, ABM de
-   roles con protección/conflicto) y del módulo de ejemplo — sin pausar
-   a preguntarme, es un schema propio de un proyecto recién creado, sin
-   nada en riesgo. Si no la hay: no lo intentes, marcá esas tareas como
-   pendientes por ausencia de Postgres y seguí con el resto.
-4. Si encontrás algún bug real en el camino (con o sin Postgres),
-   corregilo en el código generado y avisame — yo le paso el reporte al
-   administrador de connexa-ia-template. No corrijas vos
-   connexa-ia-template (specs/001-scaffold-inicial/{spec,plan,tasks}.md
-   ni templates/scaffold/, la fuente) — es una decisión que reviso yo
-   antes de que se propague a la próxima instanciación.
-5. Marcá tasks.md con el resultado real de cada tarea (no asumas nada
-   como hecho sin haberlo corrido; lo que quedó pendiente por falta de
-   Postgres, marcalo como tal, no como hecho) y dejame un resumen de qué
-   quedó validado y qué sigue pendiente.
-
-No hagas commit de nada — dejalo en el working tree para que lo revise
-antes.
-```
-
-## Compatibilidad multi-agente
-
-Este scaffold está pensado para que lo instancien y ejecuten personas distintas desde herramientas
-distintas — no sólo Claude Code. Por eso el prompt de instanciación genera siempre `CLAUDE.md` +
-`AGENTS.md` + `requirements.md` en el proyecto resultante (`plan.md` §11):
-
-- **Claude Code** lee `CLAUDE.md` garantizado.
-- **GitHub Copilot coding agent** (web) lee `AGENTS.md` (el más cercano en el árbol), y también soporta un
-  `CLAUDE.md` de raíz directamente — confirmado contra la documentación oficial de GitHub, 2026-08-27.
-- Ambos terminan leyendo el mismo `requirements.md` — la única fuente de los acuerdos fundamentales
-  (hosting, SDD, TDD, arquitectura, bajo acoplamiento entre módulos, Gitflow), sin que ningún agente reciba
-  una versión distinta.
 
 ## Por qué el bajo acoplamiento entre módulos es la regla central de este scaffold
 
