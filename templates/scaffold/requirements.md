@@ -55,6 +55,21 @@ silencio ni se lo contradice en un spec sin dejarlo dicho.
   testear), todo requisito funcional se implementa test-first: test que falla → código mínimo que lo pasa
   → refactor. `tasks.md` intercala explícitamente tarea de test y tarea de implementación, no las agrupa al
   final.
+- **Alcance real de "todo requisito funcional"**: aplica a lógica de dominio y de repositorio (`domain/`,
+  `infra/*.repository.*.ts`) — ahí es donde vive el riesgo real (duplicados, validaciones, traducción de
+  errores) y donde este scaffold siempre tuvo test-first, desde `auth`/`example` en adelante. **Las rutas
+  HTTP** (`api/*.routes.ts`) son deliberadamente la excepción: son una capa delgada (Zod + delegar al
+  dominio + traducir el resultado a status HTTP) que se valida a mano una vez (`curl`/HTTP real, dejado
+  como evidencia en `tasks.md`), no con un test automatizado — así viene funcionando en todo el scaffold,
+  nunca hubo un test de rutas en ningún módulo. No es una omisión sin decir: es la convención real del
+  proyecto, y esta línea es la que la deja escrita en vez de asumida.
+- **Si una feature necesita más que eso** (una ruta con lógica propia no delegable, o el equipo decide que
+  vale la pena empezar a cubrir HTTP con tests), el spec lo declara explícitamente en su `plan.md` y suma
+  `supertest` contra el `app` de Express ya exportado sin `.listen()` (`server/index.ts`) — pero es una
+  decisión puntual de ese spec, no algo que se infiere en silencio ni que obliga a retrofitear los módulos
+  ya cerrados. Si en algún momento el equipo decide adoptarlo como convención general (no sólo para una
+  feature puntual), esa decisión se toma acá, en este documento — no se cuela como efecto colateral de un
+  spec individual.
 
 ## 4. Bajo acoplamiento y dirección de dependencias entre módulos — no negociable
 
