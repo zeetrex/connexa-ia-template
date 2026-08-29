@@ -1,11 +1,12 @@
 # Plan técnico: Scaffold de app full-stack con arquitectura vertical-hexagonal por módulo
 
 > **Nota sobre este documento**: a diferencia del `plan.md` estándar de SDD (que fija decisiones técnicas
-> y deja el código para la fase de `tasks.md` — ver `requirements.md` §2, §11 más abajo), este spec no
-> describe una feature sino un scaffold — el objetivo es que se reproduzca igual en cada instanciación, sin
-> margen de diseño para quien lo ejecute. Esa excepción hoy vive como un árbol de archivos real
-> (`templates/scaffold/`), no como código embebido en este documento — ver §5-13. No es el patrón a seguir
-> en ningún spec posterior a `001`.
+> y deja el código para la fase de `tasks.md` — ver `requirements.md` §2, §11 más abajo), este documento
+> describe cómo se generó este proyecto, no una feature — es la copia, con los placeholders resueltos, del
+> `plan.md` de `001-scaffold-inicial` de `connexa-ia-template` (el scaffold fuente), cuyo objetivo es
+> reproducirse igual en cada instanciación, sin margen de diseño para quien lo ejecuta. El código en sí
+> (`server/`, `src/`) es la referencia completa — ver §5-13 para el manifiesto de qué hace cada archivo. No
+> es el patrón a seguir en ningún spec posterior a `001` de este proyecto.
 
 ## 0. Placeholders — catálogo completo
 
@@ -150,7 +151,7 @@ consecuencias prácticas, no en preferencia estética:
 `@tanstack/react-query` centraliza loading/error/cache de datos remotos, en vez de manejarlo a mano por
 componente. Las 5 dependencias `@radix-ui/*` son las que efectivamente usan los componentes escritos en
 este documento (`Dialog`, `Checkbox`, `Label`, `Switch`, y `Slot` para `Button`/`Badge`) — van fijas porque
-el código de `templates/scaffold/src/` ya se comprometió a usarlas, no es especulativo. `Badge` no necesita un paquete Radix
+el código de `src/` ya se comprometió a usarlas, no es especulativo. `Badge` no necesita un paquete Radix
 propio (es un `<span>` con variantes de `class-variance-authority`, reutiliza `Slot`). `tw-animate-css` la
 usa el sistema de diseño (`src/index.css`) para las transiciones de componentes como `Dialog`/`Sidebar`. Si un
 módulo nuevo necesita un primitivo de shadcn adicional (`Select`, `Tabs`, etc.), se suma en ese momento —
@@ -210,7 +211,7 @@ no se fija de antemano una lista de ~20 paquetes "por si acaso".
 - **Doble repo por puerto**: `*.repository.pg.ts` (SQL real) + `*.repository.in-memory.ts` (`Map`), misma
   interfaz — el segundo corre en tests sin Postgres.
 - **Store compartido cuando dos repos tocan las mismas tablas**: ver
-  `templates/scaffold/server/modules/auth/infra/in-memory-auth-store.ts` — `UserRepository` y
+  `server/modules/auth/infra/in-memory-auth-store.ts` — `UserRepository` y
   `RoleRepository` en memoria comparten instancia para que un chequeo tipo "¿el rol tiene usuarios
   asignados?" vea lo que escribió el otro repo.
 - **Errores de dominio como clases**: `class XError extends Error` en `domain/errors.ts`; la capa `api/`
@@ -308,24 +309,15 @@ transversal a todos) — eso no va en `platform/`, y no es una violación a tole
 `requirements.md` §4.1 (§11 más abajo) para el criterio completo.
 
 
-## 5-13. Implementación — ver `templates/scaffold/`
+## 5-13. Implementación — ver el código de este mismo proyecto
 
-El código completo (antes embebido acá como bloques de markdown) ahora vive como archivos reales en
-`templates/scaffold/`, con los mismos placeholders (`{{PROJECT_NAME}}`, `{{DB_SCHEMA}}`,
-`{{EXAMPLE_MODULE_NAME}}`, etc.) que antes tenían los bloques de código — sin resolver, para que
-`scripts/instantiate.mjs` (§15) los sustituya de forma determinística en vez de que un agente los retipee
-leyendo este documento. Es la misma información que había en las secciones §5-§13 originales, en formato
-de archivo en vez de markdown — nada del contenido se perdió, sólo cambió dónde vive.
+El código completo (antes embebido acá como bloques de markdown, en el `plan.md` del scaffold fuente) es
+el árbol real de este proyecto — `server/`, `src/`, `api/` — generado por `connexa-ia-template` vía
+`node scripts/instantiate.mjs {{PROJECT_NAME}}` a partir de `templates/scaffold/` de ese repo. Este
+documento no lo transcribe: es el manifiesto de qué hace cada archivo, para orientarse sin tener que abrir
+los ~40 uno por uno.
 
-Por qué: dos instanciaciones separadas del mismo `{{PROJECT_NAME}}`, ejecutadas por agentes distintos en
-momentos distintos, daban resultados que podían diferir en detalles menores porque cada una involucraba
-que un LLM reprodujera ~40 archivos de memoria/lectura. Copiar un directorio y sustituir 4 tokens no tiene
-ese margen de variación — es el mismo mecanismo de "réplica exacta" que ya regía el resto de este scaffold
-(paleta de colores fija, componentes reales de shadcn/ui, `baseColor: neutral`), llevado también a la capa
-de código.
-
-Manifiesto de archivos (path relativo a `templates/scaffold/`, más el propósito que documentaba la
-sección original):
+Manifiesto de archivos (path relativo a la raíz de este proyecto):
 
 ### `server/platform/` — capa transversal
 
@@ -386,7 +378,7 @@ sección original):
 |---|---|
 | `components.json` | Config de shadcn/ui — `style: new-york`, `baseColor: neutral`. |
 | `src/lib/utils.ts` | `cn()`, usado por todo primitivo de `ui/`. |
-| `src/components/ui/{switch,badge,sidebar,dropdown-menu,button,card,table,dialog,input,label,checkbox,sonner}.tsx` | Los 11 primitivos de shadcn/ui que el scaffold usa, código fuente completo — `templates/scaffold/` es ahora una copia literal, así que no tiene sentido dejar ninguno afuera "porque es genérico": copiarlo cuesta lo mismo que documentarlo, y deja la instanciación 100% determinística (antes, estos 7 dependían de correr `npx shadcn add` a mano o de que un agente los reprodujera de memoria — el único paso no determinístico que quedaba en todo el pipeline). |
+| `src/components/ui/{switch,badge,sidebar,dropdown-menu,button,card,table,dialog,input,label,checkbox,sonner}.tsx` | Los 11 primitivos de shadcn/ui que el proyecto usa, código fuente completo. |
 | `src/lib/api.ts` | Cliente API tipado — único lugar con `fetch`. `ApiRequestError` trae `status`/`method`/`url`/`requestBody`/`responseBody`/`rawResponseBody`/`isNetworkError`, no sólo `message`. |
 | `src/lib/auth-context.tsx` | `AuthProvider`/`useAuth()` — sesión, permisos, `hasPermission()`. |
 | `src/lib/error-debug.ts` | `buildErrorDebugPayload()` — arma el detalle técnico completo de un error para `ErrorDebugDialog`. |
@@ -434,21 +426,21 @@ del repo directamente.** Claude Code sólo garantiza leer `CLAUDE.md`. La estruc
 
 ### 11.1. `requirements.md`
 
-Contenido completo en `templates/scaffold/requirements.md`.
+Contenido completo en `requirements.md`, en la raíz de este proyecto.
 
 ### 11.2. `CLAUDE.md`
 
-Contenido completo en `templates/scaffold/CLAUDE.md`.
+Contenido completo en `CLAUDE.md`, en la raíz de este proyecto.
 
 ### 11.3. `AGENTS.md`
 
-Contenido completo en `templates/scaffold/AGENTS.md`.
+Contenido completo en `AGENTS.md`, en la raíz de este proyecto.
 
 ### 11.4. `templates/` — los 7 artefactos de SDD para specs futuros
 
-Contenido completo en `templates/scaffold/templates/` (`spec-template.md`, `plan-template.md`,
-`tasks-template.md`, `research-template.md`, `data-model-template.md`, `contracts-template.md`,
-`quickstart-template.md`) — copiados verbatim a cada proyecto instanciado.
+Contenido completo en `templates/`, en la raíz de este proyecto (`spec-template.md`,
+`plan-template.md`, `tasks-template.md`, `research-template.md`, `data-model-template.md`,
+`contracts-template.md`, `quickstart-template.md`) — usarlos para todo spec `002` en adelante.
 
 ## 14. Build & run
 
@@ -463,53 +455,14 @@ npm test            # unitarios siempre; integración si DATABASE_URL está sete
 ```
 
 
-## 15. Cómo instanciar este scaffold para un proyecto real
+## 15. Cómo se instanció este proyecto
 
-`{{PROJECT_NAME}}` sigue siendo el único input real — todo lo demás (catálogo completo en §0) se resuelve
-solo. La diferencia con el modelo anterior: generar el código ya no es un paso que un agente ejecuta
-leyendo este documento y retipeando ~40 archivos — es `node scripts/instantiate.mjs {{PROJECT_NAME}}`,
-determinístico, sin margen de variación entre corridas. Lo que sigue siendo trabajo real, y sigue
-necesitando criterio de un agente (o de una persona), es la validación:
+Este proyecto (`{{PROJECT_NAME}}`) se generó corriendo `node scripts/instantiate.mjs {{PROJECT_NAME}}`
+desde `connexa-ia-template` — copió `templates/scaffold/` de ese repo y sustituyó los placeholders de §0
+de forma determinística, sin que ningún agente retipeara código. `tasks.md` de este spec documenta el
+resultado real de la validación posterior (tests, build, y — si había Postgres alcanzable al momento de
+instanciar — el ciclo funcional completo de auth/roles/módulo de ejemplo).
 
-```bash
-node scripts/instantiate.mjs {{PROJECT_NAME}}     # copia templates/scaffold/ + sustituye placeholders
-cd ../{{PROJECT_NAME}}
-npm install
-npm test                                           # unitarios sin Postgres, incl. module-boundaries.test.ts
-```
-
-Si hay Postgres alcanzable: migrar y validar a mano (bootstrap, segundo usuario inactivo, ABM de roles con
-protección/conflicto, ciclo del módulo de ejemplo), sin pausar a preguntar — es un schema propio de un
-proyecto recién creado, sin nada en riesgo. Si no la hay (esperable en GitHub Copilot coding agent sin el
-setup de `README.md` §"Tests de integración: limitación real en GitHub Copilot coding agent"), esas tareas
-quedan marcadas pendientes en `tasks.md`, no bloqueadas.
-
-`scripts/instantiate.mjs` falla fuerte (exit code ≠ 0, listando cada archivo y token) si queda algún
-`{{...}}` sin resolver en el árbol generado — la instanciación no puede terminar "casi bien".
-
-Prompt completo, con las instrucciones de validación detalladas: `README.md` §"Cómo instanciar un proyecto
-nuevo". Versión corta acá:
-
-```
-Usá este scaffold (specs/001-scaffold-inicial/{spec,plan,tasks}.md y
-scripts/instantiate.mjs) para instanciar un proyecto nuevo llamado
-{{PROJECT_NAME}}.
-
-{{PROJECT_NAME}} es el único placeholder que hace falta preguntar — el resto
-(catálogo completo en plan.md §0) se resuelve solo: derivado, fijo, o con
-un default seguro que se puede pisar si hace falta.
-
-1. Corré `node scripts/instantiate.mjs {{PROJECT_NAME}}` — genera el
-   proyecto completo (código + specs/CLAUDE.md/AGENTS.md/requirements.md,
-   con los placeholders resueltos) de forma determinística.
-2. `npm install` + `npm test` (sin Postgres).
-3. Si hay Postgres alcanzable: migrá y validá a mano, sin pausar a
-   preguntarme. Si no la hay: marcá esas tareas como pendientes por
-   ausencia de Postgres y seguí con el resto — no es un bloqueo.
-
-Mantené el mismo alcance del scaffold: auth + ABM completo, un módulo de
-ejemplo genérico, patrón de capas ports/domain/infra/api, bajo acoplamiento
-entre módulos verificado por server/module-boundaries.test.ts, schema
-propio (nunca public), todo en inglés, arnés de tests SAVEPOINT desde el
-día uno. No agregues nada nuevo todavía.
-```
+Si en algún momento hace falta instanciar **otro** proyecto nuevo con esta misma arquitectura, el punto de
+partida es `connexa-ia-template` (no este repo) — ver su propio `README.md` §"Cómo instanciar un proyecto
+nuevo".

@@ -239,65 +239,64 @@ sólo durante el job mismo — es la duda real que queda pendiente de validar a 
 
 ## Cómo instanciar un proyecto nuevo
 
-Un solo prompt, una sola sesión, sin pausas intermedias — no hace falta separar en "generar el spec" y
-"ejecutarlo" como dos pasos distintos: con un único input real (`{{PROJECT_NAME}}`) no queda nada que
-revisar en los documentos antes de generar el código. Tampoco hace falta pausar antes de `npm run migrate`
-contra una Postgres real: al ser un schema propio (`{{DB_SCHEMA}}`) de un proyecto recién creado, sin datos
-existentes en riesgo, correrlo es tan reversible como borrar ese schema — no es la misma situación que
-migrar una base compartida con datos reales, que sí amerita cuidado (`requirements.md` §1). Si no hay
-Postgres alcanzable (el caso esperable en GitHub Copilot coding agent sin el setup de la sección anterior),
-esas tareas quedan marcadas como pendientes en `tasks.md` — no es un bloqueo, es el resultado normal a
-reportar, mismo criterio que ya usan los tests (`describe.skipIf(!HAS_DB)`).
+Generar el código ya no es un paso que un agente ejecuta leyendo `plan.md` y retipeando ~40 archivos — es
+`node scripts/instantiate.mjs <nombre-proyecto>`, determinístico: copia `templates/scaffold/` y sustituye
+los placeholders de `plan.md` §0, sin margen de variación entre corridas de agentes distintos en momentos
+distintos. El script falla fuerte (exit code ≠ 0, listando cada archivo y token) si queda algún `{{...}}`
+sin resolver — no puede terminar "casi bien".
+
+Lo que sigue siendo trabajo real, con criterio de un agente o de una persona, es la validación posterior.
+Tampoco hace falta pausar antes de `npm run migrate` contra una Postgres real: al ser un schema propio
+(`{{DB_SCHEMA}}`) de un proyecto recién creado, sin datos existentes en riesgo, correrlo es tan reversible
+como borrar ese schema — no es la misma situación que migrar una base compartida con datos reales, que sí
+amerita cuidado (`requirements.md` §1). Si no hay Postgres alcanzable (el caso esperable en GitHub Copilot
+coding agent sin el setup de la sección anterior), esas tareas quedan marcadas como pendientes en
+`tasks.md` — no es un bloqueo, es el resultado normal a reportar, mismo criterio que ya usan los tests
+(`describe.skipIf(!HAS_DB)`).
 
 Prompt para pasarle a un agente (Claude Code, GitHub Copilot coding agent, u otro) que tenga acceso a este
 scaffold. Reemplazá `<nombre-proyecto-kebab-case>` por el nombre real una sola vez, en el segundo párrafo
 — el resto del prompt lo referencia por `{{PROJECT_NAME}}`, no hace falta repetirlo en ningún otro lado.
 
 ```
-Usá connexa-ia-template (specs/001-scaffold-inicial/{spec,plan,tasks}.md)
-como base literal para instanciar un proyecto nuevo.
+Usá connexa-ia-template para instanciar un proyecto nuevo.
 
 Nombre del proyecto ({{PROJECT_NAME}}, kebab-case, fijo — no me
 preguntes por él): <nombre-proyecto-kebab-case>
-Creá el directorio nuevo con ese mismo nombre.
 
 Todo lo demás (catálogo completo en plan.md §0) se resuelve solo a
 partir de ese nombre: {{PROJECT_NAME_PASCAL}}/{{PROJECT_NAME_TITLE}}/
 {{DB_SCHEMA}}/{{DATABASE_NAME}} derivados; puertos fijos (5000/3001, no
 placeholder); ALLOWED_EMAIL_DOMAINS con default ['zeetrex.com'] (se pisa
-si el proyecto necesita otro dominio); módulo de ejemplo con default
-"example" salvo que me digas la entidad real del proyecto ahora.
+con --allowed-domains si el proyecto necesita otro dominio); módulo de
+ejemplo con default "example" (se pisa con --example-module si me decís
+la entidad real del proyecto ahora).
 
-1. Generá specs/001-scaffold-inicial/{spec,plan,tasks}.md del proyecto
-   nuevo con los placeholders resueltos, y CLAUDE.md/AGENTS.md/
-   requirements.md en la raíz (plan.md §11) — son parte del scaffold, no
-   un extra opcional. Confirmá que requirements.md incluye íntegra la
-   sección de bajo acoplamiento y dirección de dependencias entre módulos
-   (§4). Mantené el mismo alcance del template (auth + ABM completo, un
-   módulo de ejemplo, patrón de capas, bajo acoplamiento entre módulos
-   verificado por server/module-boundaries.test.ts, schema propio —
-   nunca `public`, todo en inglés, arnés SAVEPOINT desde el día uno). No
-   agregues nada nuevo todavía.
-2. Generá la estructura completa del repo y todo el código siguiendo
-   tasks.md de punta a punta (T001 en adelante): bootstrap, la capa
-   transversal, el módulo de auth+ABM completo, el módulo de ejemplo, el
-   test de límites entre módulos, el wiring, y el frontend — tal cual
-   está descripto en plan.md, capa por capa.
-3. Corré npm install + npm test y confirmá que los tests unitarios pasan
-   sin necesidad de Postgres, incluido module-boundaries.test.ts.
-4. Verificá si hay una Postgres alcanzable (Node 20+, DATABASE_URL
+1. Corré `node scripts/instantiate.mjs {{PROJECT_NAME}}` — genera el
+   proyecto completo (código + specs/001-scaffold-inicial/{spec,plan,
+   tasks}.md, CLAUDE.md/AGENTS.md/requirements.md, templates/) en un
+   directorio nuevo, con los placeholders resueltos. Confirmá que
+   terminó sin reportar ningún placeholder pendiente, y que
+   requirements.md incluye íntegra la sección de bajo acoplamiento y
+   dirección de dependencias entre módulos (§4).
+2. Corré npm install + npm test y confirmá que los tests unitarios pasan
+   sin necesidad de Postgres, incluido module-boundaries.test.ts —
+   verificá que ese test realmente detecta una violación real, no sólo
+   que corre.
+3. Verificá si hay una Postgres alcanzable (Node 20+, DATABASE_URL
    resuelve). Si la hay: migrá, levantá el server, y validá a mano el
    ciclo completo de auth (bootstrap, segundo usuario inactivo, ABM de
    roles con protección/conflicto) y del módulo de ejemplo — sin pausar
    a preguntarme, es un schema propio de un proyecto recién creado, sin
    nada en riesgo. Si no la hay: no lo intentes, marcá esas tareas como
    pendientes por ausencia de Postgres y seguí con el resto.
-5. Si encontrás algún bug real en el camino (con o sin Postgres),
-   corregilo en el código generado Y en los documentos canónicos de
-   connexa-ia-template (specs/001-scaffold-inicial/{spec,plan,tasks}.md,
-   la fuente, no la copia instanciada) para que no se repita en la
-   próxima instanciación.
-6. Marcá tasks.md con el resultado real de cada tarea (no asumas nada
+4. Si encontrás algún bug real en el camino (con o sin Postgres),
+   corregilo en el código generado y avisame — yo le paso el reporte al
+   administrador de connexa-ia-template. No corrijas vos
+   connexa-ia-template (specs/001-scaffold-inicial/{spec,plan,tasks}.md
+   ni templates/scaffold/, la fuente) — es una decisión que reviso yo
+   antes de que se propague a la próxima instanciación.
+5. Marcá tasks.md con el resultado real de cada tarea (no asumas nada
    como hecho sin haberlo corrido; lo que quedó pendiente por falta de
    Postgres, marcalo como tal, no como hecho) y dejame un resumen de qué
    quedó validado y qué sigue pendiente.
