@@ -197,6 +197,11 @@ proyecto.
     `isNetworkError` (no hay red) de un error HTTP real (el servidor respondió, pero con status de error).
     Cualquier módulo/vista nueva que agregue un cliente a `api.ts` hereda esto automáticamente — no hay que
     repetir la lógica de captura, sólo usar `request()`.
+  - Esta regla (como el resto de §5.1) no queda librada a que quien escriba un spec nuevo se acuerde de
+    repasarla: `plan-template.md` §3 (Constitution Check) trae un checkbox propio para §5.1 que la nombra
+    explícitamente — un `plan.md` que agregue una vista y sólo diga "mismo patrón visual que [otra vista]"
+    no cumple ese checkbox, porque el manejo de errores es una convención distinta de la visual y se
+    declara aparte.
 
 ## 6. Branching model: Gitflow
 
