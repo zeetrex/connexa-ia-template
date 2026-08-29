@@ -122,11 +122,15 @@ Supongamos que el proyecto instanciado necesita agregar prioridad a las tareas d
    T002 la implementación (lo hace pasar), T003 la migración, etc.
 6. **implement** → se ejecutan T001, T002, T003... en orden, con tests corriendo en verde en cada paso.
 
-### El prompt de `/analyze`, para copiar y pegar
+### El prompt de `/analyze`
 
-No hace falta la CLI de spec-kit — es texto plano que cualquier agente (Claude Code, GitHub Copilot coding
-agent, Codex, u otro) puede seguir con sólo leerlo. Antes de arrancar la implementación de cualquier spec
-posterior a `001`:
+**No hace falta correrlo a mano ni pegarlo en ningún lado** — ya viene incluido como **T000**, la primera
+tarea de `templates/tasks-template.md`, así que aparece automáticamente en el `tasks.md` de cualquier spec
+nuevo (`002` en adelante) apenas se genera a partir del template. Un agente que sigue `tasks.md` tarea por
+tarea lo ejecuta solo, sin que nadie se lo pida explícitamente — `requirements.md` §2 lo deja obligatorio
+("ningún spec pasa a implementación sin este paso hecho"). El texto de abajo es el contenido exacto de esa
+tarea, por si en algún momento hace falta correrlo suelto — a mano, o para volver a chequear una feature
+después de editarla:
 
 ```
 Leé specs/<NNN-slug>/spec.md, plan.md y tasks.md de esta feature, y
@@ -255,24 +259,11 @@ sólo durante el job mismo — es la duda real que queda pendiente de validar a 
 
 ## Cómo instanciar un proyecto nuevo
 
-Generar el código ya no es un paso que un agente ejecuta leyendo `plan.md` y retipeando ~40 archivos — es
-`node scripts/instantiate.mjs <nombre-proyecto>`, determinístico: copia `templates/scaffold/` y sustituye
-los placeholders de `plan.md` §0, sin margen de variación entre corridas de agentes distintos en momentos
-distintos. El script falla fuerte (exit code ≠ 0, listando cada archivo y token) si queda algún `{{...}}`
-sin resolver — no puede terminar "casi bien".
+Instanciar es `node scripts/instantiate.mjs <nombre-proyecto>` — copia `templates/scaffold/` y sustituye
+los placeholders de forma determinística, sin que un agente tenga que leer `plan.md` y retipear código.
 
-Lo que sigue siendo trabajo real, con criterio de un agente o de una persona, es la validación posterior.
-Tampoco hace falta pausar antes de `npm run migrate` contra una Postgres real: al ser un schema propio
-(`{{DB_SCHEMA}}`) de un proyecto recién creado, sin datos existentes en riesgo, correrlo es tan reversible
-como borrar ese schema — no es la misma situación que migrar una base compartida con datos reales, que sí
-amerita cuidado (`requirements.md` §1). Si no hay Postgres alcanzable (el caso esperable en GitHub Copilot
-coding agent sin el setup de la sección anterior), esas tareas quedan marcadas como pendientes en
-`tasks.md` — no es un bloqueo, es el resultado normal a reportar, mismo criterio que ya usan los tests
-(`describe.skipIf(!HAS_DB)`).
-
-Prompt para pasarle a un agente (Claude Code, GitHub Copilot coding agent, u otro) que tenga acceso a este
-scaffold. Reemplazá `<nombre-proyecto-kebab-case>` por el nombre real una sola vez, en el segundo párrafo
-— el resto del prompt lo referencia por `{{PROJECT_NAME}}`, no hace falta repetirlo en ningún otro lado.
+Prompt para pasarle a un agente con acceso a este scaffold — el nombre del proyecto va **una sola vez**,
+reemplazando `<nombre-proyecto-kebab-case>` en el segundo párrafo:
 
 ```
 Usá connexa-ia-template para instanciar un proyecto nuevo.
