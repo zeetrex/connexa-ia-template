@@ -255,9 +255,6 @@ la entidad real del proyecto ahora).
 
 SI NO PODÉS SEGUIR AL PIE DE LA LETRA LO QUE ESTE PROMPT PIDE, CORTÁ LA
 EJECUCIÓN Y DEVOLVÉ EL ERROR. No intentes resolver otra cosa.
-
-No hagas commit de nada — dejalo en el working tree para que lo revise
-antes.
 ```
 
 ## Compatibilidad multi-agente
