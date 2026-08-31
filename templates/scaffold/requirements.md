@@ -19,6 +19,17 @@ silencio ni se lo contradice en un spec sin dejarlo dicho.
 ## 2. SDD obligatorio para toda feature nueva
 
 - Todo feature/fix no trivial se planifica antes de escribir código: `specs/NNN-slug/{spec.md,plan.md,tasks.md}`.
+- **Revisión de solapamiento con specs existentes, obligatoria antes de `specify`**: antes de crear
+  `specs/NNN-slug/spec.md` para un feature nuevo, el agente lee `spec.md` (y `plan.md` si hace falta) de
+  todos los specs ya existentes en `specs/` para detectar si el requisito ya es competencia de un módulo
+  existente (misma entidad/dominio/caso de uso — no sólo nombre parecido). Si encuentra solapamiento real,
+  no arranca el spec nuevo en silencio: se lo muestra al usuario (qué spec/módulo existente, por qué) y le
+  pregunta explícitamente si quiere un módulo nuevo independiente o extender el módulo existente. La
+  decisión (y el motivo) queda registrada en `spec.md`, en la sección `## Clarifications` (mismo formato
+  `Q: ... → A: ...` que ya usa la fase `clarify` — ver `templates/spec-template.md`). Si la resolución es
+  extender un módulo existente, no se crea un módulo nuevo en `server/modules/` — el spec nuevo referencia
+  al que extiende (`specs/00X-slug` extiende `specs/00Y-slug`) en vez de duplicar lógica de negocio. El
+  paso `analyze` (T000, más abajo) actúa como red de seguridad si este chequeo se saltea — no lo reemplaza.
 - Convención tomada de [GitHub spec-kit](https://github.com/github/spec-kit) — no inventada para este
   proyecto. `spec.md` = QUÉ y POR QUÉ (requisitos, historias de usuario, criterios de aceptación, sin
   detalle técnico). `plan.md` = decisiones técnicas — arquitectura, modelo de datos, contratos de API,

@@ -71,6 +71,11 @@ requirements.md como constitución del proyecto. Chequeá:
    asociada en tasks.md, o tareas que no corresponden a ningún requisito.
 6. Inconsistencia — términos que cambian de nombre entre los tres
    documentos, entidades de datos contradictorias.
+7. Solapamiento con specs existentes — ¿algún requisito de spec.md ya
+   está cubierto por un módulo de un spec anterior en specs/? Marcalo
+   como hallazgo si hay solapamiento real. Este chequeo es la red de
+   seguridad de la revisión obligatoria que ya debería haberse hecho
+   antes de escribir spec.md (requirements.md §2) — no la reemplaza.
 
 Devolvé una tabla (ID, categoría, severidad, dónde, resumen,
 recomendación) y un resumen de cobertura requisito↔tarea. No modifiques

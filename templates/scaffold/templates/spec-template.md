@@ -8,7 +8,9 @@
 
 ## Clarifications
 
-*(Vacío hasta que haga falta resolver una ambigüedad. Formato:)*
+*(Vacío hasta que haga falta resolver una ambigüedad — incluida la decisión de módulo nuevo vs. extender
+uno existente, si la revisión de solapamiento con specs existentes (`requirements.md` §2) encontró
+solapamiento real con un spec anterior. Formato:)*
 
 ### Session YYYY-MM-DD
 - Q: <pregunta> → A: <respuesta>
