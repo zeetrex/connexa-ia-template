@@ -252,6 +252,8 @@ la entidad real del proyecto ahora).
    como hecho sin haberlo corrido; lo que quedó pendiente por falta de
    Postgres, marcalo como tal, no como hecho) y dejame un resumen de qué
    quedó validado y qué sigue pendiente.
+6. Hacé commit de todo el proyecto instanciado sobre la rama en la que
+   estés trabajando — no dejes el resultado sin commitear.
 
 SI NO PODÉS SEGUIR AL PIE DE LA LETRA LO QUE ESTE PROMPT PIDE, CORTÁ LA
 EJECUCIÓN Y DEVOLVÉ EL ERROR. No intentes resolver otra cosa.
