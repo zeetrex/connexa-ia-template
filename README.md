@@ -192,11 +192,20 @@ Ver `spec.md` §3 para el detalle completo de qué queda afuera y por qué.
 Instanciar es `node scripts/instantiate.mjs <nombre-proyecto>` — copia `templates/scaffold/` y sustituye
 los placeholders de forma determinística, sin que un agente tenga que leer `plan.md` y retipear código.
 
-Prompt para pasarle a un agente con acceso a este scaffold — el nombre del proyecto va **una sola vez**,
-reemplazando `<nombre-proyecto-kebab-case>` en el segundo párrafo:
+Prompt para pasarle a un agente con acceso a este scaffold — sirve tanto para Claude Code corriendo
+localmente (con este repo ya clonado) como para GitHub Copilot coding agent (web, sin filesystem local,
+sólo GitHub) sin necesitar dos versiones distintas: el paso 0 y el paso 3 se adaptan solos según lo que el
+entorno le permita al agente. El nombre del proyecto va **una sola vez**, reemplazando
+`<nombre-proyecto-kebab-case>` en el segundo párrafo:
 
 ```
-Usá connexa-ia-template para instanciar un proyecto nuevo.
+Usá connexa-ia-template para instanciar un proyecto nuevo. Buscalo primero en
+el filesystem local (donde ya deberías tenerlo clonado, junto a este proyecto);
+si no está disponible ahí, cloná/accedé a
+https://github.com/zeetrex/connexa-ia-template. Antes que nada, confirmá que
+lograste acceder por alguna de las dos vías y que existe scripts/instantiate.mjs
+dentro — si no pudiste acceder de ninguna forma, cortá la ejecución y devolvé el
+error.
 
 Nombre del proyecto ({{PROJECT_NAME}}, kebab-case, fijo — no me
 preguntes por él): <nombre-proyecto-kebab-case>
@@ -209,24 +218,30 @@ con --allowed-domains si el proyecto necesita otro dominio); módulo de
 ejemplo con default "example" (se pisa con --example-module si me decís
 la entidad real del proyecto ahora).
 
-1. Corré `node scripts/instantiate.mjs {{PROJECT_NAME}}` — genera el
+1. Corré `node scripts/instantiate.mjs {{PROJECT_NAME}}` (sin segundo
+   argumento, así queda como hermano del repo fuente) — genera el
    proyecto completo (código + specs/001-scaffold-inicial/{spec,plan,
-   tasks}.md, CLAUDE.md/AGENTS.md/requirements.md, templates/) en un
-   directorio nuevo, con los placeholders resueltos. Confirmá que
-   terminó sin reportar ningún placeholder pendiente, y que
-   requirements.md incluye íntegra la sección de bajo acoplamiento y
-   dirección de dependencias entre módulos (§4).
+   tasks}.md, CLAUDE.md/AGENTS.md/requirements.md, templates/) con los
+   placeholders resueltos. Confirmá que terminó sin reportar ningún
+   placeholder pendiente, y que requirements.md incluye íntegra la
+   sección de bajo acoplamiento y dirección de dependencias entre
+   módulos (§4).
 2. Corré npm install + npm test y confirmá que los tests unitarios pasan
    sin necesidad de Postgres, incluido module-boundaries.test.ts —
    verificá que ese test realmente detecta una violación real, no sólo
    que corre.
-3. Verificá si hay una Postgres alcanzable (Node 20+, DATABASE_URL
-   resuelve). Si la hay: migrá, levantá el server, y validá a mano el
-   ciclo completo de auth (bootstrap, segundo usuario inactivo, ABM de
-   roles con protección/conflicto) y del módulo de ejemplo — sin pausar
-   a preguntarme, es un schema propio de un proyecto recién creado, sin
-   nada en riesgo. Si no la hay: no lo intentes, marcá esas tareas como
-   pendientes por ausencia de Postgres y seguí con el resto.
+3. Fijate si hay una Postgres alcanzable (Node 20+, DATABASE_URL
+   resuelve). Si no la hay, intentá levantar vos mismo una Postgres
+   local (por ejemplo `docker run` con postgres:16) sin pausar a
+   preguntarme — es un schema propio de un proyecto recién creado, sin
+   nada en riesgo. Si tu entorno no te permite levantar un contenedor ni
+   acceder a ninguna Postgres (por ejemplo, no tenés `docker run` libre
+   disponible), no insistas: marcá esas tareas como pendientes por
+   ausencia de Postgres y seguí con el resto. Si conseguiste una
+   Postgres por cualquiera de las dos vías: migrá, levantá el server, y
+   validá a mano el ciclo completo de auth (bootstrap, segundo usuario
+   inactivo, ABM de roles con protección/conflicto) y del módulo de
+   ejemplo.
 4. Si encontrás algún bug real en el camino (con o sin Postgres),
    corregilo en el código generado y avisame — yo le paso el reporte al
    administrador de connexa-ia-template. No corrijas vos
@@ -237,6 +252,9 @@ la entidad real del proyecto ahora).
    como hecho sin haberlo corrido; lo que quedó pendiente por falta de
    Postgres, marcalo como tal, no como hecho) y dejame un resumen de qué
    quedó validado y qué sigue pendiente.
+
+SI NO PODÉS SEGUIR AL PIE DE LA LETRA LO QUE ESTE PROMPT PIDE, CORTÁ LA
+EJECUCIÓN Y DEVOLVÉ EL ERROR. No intentes resolver otra cosa.
 
 No hagas commit de nada — dejalo en el working tree para que lo revise
 antes.
