@@ -336,6 +336,7 @@ sección original):
 | `platform/db/transaction.ts` | Contrato `Transaction` — genuinamente transversal, no le pertenece a ningún módulo (§4a). |
 | `platform/db/pool.ts` | Pool de `pg` (conexión + SSL). No fija el schema — ver `schema.ts`. |
 | `platform/db/schema.ts` | `DB_SCHEMA` (`{{DB_SCHEMA}}`) y `beginTransaction`: `BEGIN` + `SET LOCAL search_path` sin `public`. |
+| `scripts/migrate.mjs` | Corre `node-pg-migrate` contra `DATABASE_URL_UNPOOLED` (falla si falta, sin fallback) y aborta si la migración deja objetos nuevos en `public`. |
 | `platform/db/unit-of-work.ts` | `withTransaction(fn)` — BEGIN/COMMIT/ROLLBACK reusable. |
 | `platform/http/session.ts` | `signSession`/`verifySession` — verificación vive en `platform/`, emisión en `auth` (§4b). |
 | `platform/http/authenticate.ts` | Middleware que verifica la cookie de sesión, montado global en `/api`. |
@@ -456,7 +457,7 @@ Contenido completo en `templates/scaffold/templates/` (`spec-template.md`, `plan
 
 ```bash
 npm install
-cp .env.example .env   # completar DATABASE_URL, AUTH_JWT_SECRET, GOOGLE_CLIENT_ID
+cp .env.example .env   # completar DATABASE_URL, DATABASE_URL_UNPOOLED, AUTH_JWT_SECRET, GOOGLE_CLIENT_ID
 createdb {{DATABASE_NAME}}   # o el mecanismo de Postgres local que uses
 npm run migrate
 npm run server    # backend en :3001

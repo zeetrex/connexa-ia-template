@@ -23,7 +23,7 @@ connexa-ia-template/
 ├── README.md                                  ← este archivo
 ├── scripts/
 │   └── instantiate.mjs                         ← instanciación determinística (copia + sustituye placeholders)
-├── templates/scaffold/                         ← código real y literal (81 archivos), fuente de verdad
+├── templates/scaffold/                         ← código real y literal (84 archivos), fuente de verdad
 │   ├── server/, src/, api/                      ← backend (capas), frontend, entrypoint serverless
 │   ├── package.json, tsconfig*.json, etc.       ← config del proyecto instanciado
 │   ├── requirements.md, CLAUDE.md, AGENTS.md    ← se copian tal cual a cada instancia
@@ -344,6 +344,7 @@ jobs:
       - run: npm run migrate
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/{{DATABASE_NAME}}
+          DATABASE_URL_UNPOOLED: postgres://postgres:postgres@localhost:5432/{{DATABASE_NAME}}
           DATABASE_SSL: disable
 ```
 

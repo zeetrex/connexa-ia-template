@@ -11,7 +11,12 @@ silencio ni se lo contradice en un spec sin dejarlo dicho.
   `typecheck:server && npm run migrate && npm run build` — el esquema se aplica ANTES del build del
   bundle, y todo el build falla cerrado si el typecheck o la migración fallan.
 - Las migraciones corren en el build, nunca en el cold start del proceso.
-- Env vars server-only (`DATABASE_URL`, `AUTH_JWT_SECRET`, `GOOGLE_CLIENT_ID`) como **Secret**. Cualquier
+- Las migraciones (`npm run migrate`, y por ende `vercel-build`) usan `DATABASE_URL_UNPOOLED`: conexión
+  directa, sin pooler (Neon: la URL sin `-pooler` en el host), sin fallback a `DATABASE_URL`. El
+  `SET search_path` de sesión de `node-pg-migrate` no está garantizado detrás de un pooler en transaction
+  mode y las tablas podrían caer en `public` sin error. `scripts/migrate.mjs` además aborta si la
+  migración deja objetos nuevos en `public`. La app en runtime sí puede usar `DATABASE_URL` pooled.
+- Env vars server-only (`DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `AUTH_JWT_SECRET`, `GOOGLE_CLIENT_ID`) como **Secret**. Cualquier
   var con prefijo `VITE_` termina en el bundle del navegador igual (Vite la inyecta en build time) — va
   como **Config**, nunca Secret.
 - Previews (build o no de ramas que no son `main`): [decisión del proyecto — documentar acá cuál se tomó].
