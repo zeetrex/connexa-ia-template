@@ -18,7 +18,7 @@ justificación completa de cada decisión de arquitectura. Este README documenta
 
 ```bash
 npm install
-cp .env.example .env   # completar DATABASE_URL, AUTH_JWT_SECRET, GOOGLE_CLIENT_ID
+cp .env.example .env   # completar DATABASE_URL, DATABASE_URL_UNPOOLED, AUTH_JWT_SECRET, GOOGLE_CLIENT_ID
 createdb {{DATABASE_NAME}}   # o el mecanismo de Postgres local que uses
 npm run migrate
 npm run server    # backend en :3001

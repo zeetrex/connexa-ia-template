@@ -3,7 +3,7 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import { pool } from './platform/db/pool.js';
+import { withTransaction } from './platform/db/unit-of-work.js';
 import { authenticate } from './platform/http/authenticate.js';
 import { requirePermission } from './platform/http/require-permission.js';
 import authRouter from './modules/auth/api/auth.routes.js';
@@ -30,7 +30,7 @@ app.use('/api/{{EXAMPLE_MODULE_PATH}}', {{EXAMPLE_MODULE_NAME}}Router);
 
 app.get('/api/diagnostics', requirePermission('diagnostics.view'), async (_req, res) => {
   try {
-    const { rows } = await pool.query('SELECT NOW() AS now, version() AS version');
+    const { rows } = await withTransaction((tx) => tx.query('SELECT NOW() AS now, version() AS version'));
     res.json({ status: 'ok', database: rows[0] });
   } catch (err) {
     res.status(500).json({ status: 'error', message: (err as Error).message });

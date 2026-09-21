@@ -23,7 +23,7 @@ connexa-ia-template/
 ├── README.md                                  ← este archivo
 ├── scripts/
 │   └── instantiate.mjs                         ← instanciación determinística (copia + sustituye placeholders)
-├── templates/scaffold/                         ← código real y literal (81 archivos), fuente de verdad
+├── templates/scaffold/                         ← código real y literal (84 archivos), fuente de verdad
 │   ├── server/, src/, api/                      ← backend (capas), frontend, entrypoint serverless
 │   ├── package.json, tsconfig*.json, etc.       ← config del proyecto instanciado
 │   ├── requirements.md, CLAUDE.md, AGENTS.md    ← se copian tal cual a cada instancia
@@ -242,18 +242,31 @@ la entidad real del proyecto ahora).
    validá a mano el ciclo completo de auth (bootstrap, segundo usuario
    inactivo, ABM de roles con protección/conflicto) y del módulo de
    ejemplo.
-4. Si encontrás algún bug real en el camino (con o sin Postgres),
-   corregilo en el código generado y avisame — yo le paso el reporte al
-   administrador de connexa-ia-template. No corrijas vos
-   connexa-ia-template (specs/001-scaffold-inicial/{spec,plan,tasks}.md
-   ni templates/scaffold/, la fuente) — es una decisión que reviso yo
-   antes de que se propague a la próxima instanciación.
+4. Un "bug real" es únicamente algo que hace fallar de forma observable
+   un comando o chequeo pedido en este prompt (install, test, typecheck,
+   build, migrate, endpoints del ciclo de auth/ejemplo). Corregilo en el
+   código generado con el cambio mínimo, y anotá en tasks.md, por cada
+   corrección: comando que falló, error exacto y archivo tocado. Todo lo
+   demás — hardening de seguridad, CORS, estilo, fuentes, cambios de
+   build, refactors, "mejoras" — NO se cambia: listalo en el resumen
+   final como observación y lo decido yo. Nunca modifiques
+   comportamiento que el spec del proyecto declare fuera de alcance.
+   Avisame de todo lo corregido — yo le paso el reporte al administrador
+   de connexa-ia-template. No corrijas vos connexa-ia-template
+   (specs/001-scaffold-inicial/{spec,plan,tasks}.md ni
+   templates/scaffold/, la fuente) — es una decisión que reviso yo antes
+   de que se propague a la próxima instanciación.
 5. Marcá tasks.md con el resultado real de cada tarea (no asumas nada
    como hecho sin haberlo corrido; lo que quedó pendiente por falta de
    Postgres, marcalo como tal, no como hecho) y dejame un resumen de qué
    quedó validado y qué sigue pendiente.
 6. Hacé commit de todo el proyecto instanciado sobre la rama en la que
    estés trabajando — no dejes el resultado sin commitear.
+
+No ejecutes code review, CodeQL ni ninguna otra herramienta de
+validación que este prompt no pida explícitamente. Si el entorno las
+dispara solo y fallan o dan timeout, ignorá el resultado y no lo
+reportes como pendiente del alcance.
 
 SI NO PODÉS SEGUIR AL PIE DE LA LETRA LO QUE ESTE PROMPT PIDE, CORTÁ LA
 EJECUCIÓN Y DEVOLVÉ EL ERROR. No intentes resolver otra cosa.
@@ -331,6 +344,7 @@ jobs:
       - run: npm run migrate
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/{{DATABASE_NAME}}
+          DATABASE_URL_UNPOOLED: postgres://postgres:postgres@localhost:5432/{{DATABASE_NAME}}
           DATABASE_SSL: disable
 ```
 

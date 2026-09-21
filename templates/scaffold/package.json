@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "server": "tsx watch server/index.ts",
-    "migrate": "node-pg-migrate -m server/migrations --schema {{DB_SCHEMA}} --create-schema up",
-    "migrate:down": "node-pg-migrate -m server/migrations --schema {{DB_SCHEMA}} --create-schema down",
+    "migrate": "node scripts/migrate.mjs {{DB_SCHEMA}} up",
+    "migrate:down": "node scripts/migrate.mjs {{DB_SCHEMA}} down",
     "build": "tsc -b --noCheck && vite build",
     "vercel-build": "npm run typecheck:server && npm run migrate && npm run build",
     "typecheck:server": "tsc -p tsconfig.server.json",

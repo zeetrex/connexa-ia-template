@@ -11,7 +11,12 @@ silencio ni se lo contradice en un spec sin dejarlo dicho.
   `typecheck:server && npm run migrate && npm run build` — el esquema se aplica ANTES del build del
   bundle, y todo el build falla cerrado si el typecheck o la migración fallan.
 - Las migraciones corren en el build, nunca en el cold start del proceso.
-- Env vars server-only (`DATABASE_URL`, `AUTH_JWT_SECRET`, `GOOGLE_CLIENT_ID`) como **Secret**. Cualquier
+- Las migraciones (`npm run migrate`, y por ende `vercel-build`) usan `DATABASE_URL_UNPOOLED`: conexión
+  directa, sin pooler (Neon: la URL sin `-pooler` en el host), sin fallback a `DATABASE_URL`. El
+  `SET search_path` de sesión de `node-pg-migrate` no está garantizado detrás de un pooler en transaction
+  mode y las tablas podrían caer en `public` sin error. `scripts/migrate.mjs` además aborta si la
+  migración deja objetos nuevos en `public`. La app en runtime sí puede usar `DATABASE_URL` pooled.
+- Env vars server-only (`DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `AUTH_JWT_SECRET`, `GOOGLE_CLIENT_ID`) como **Secret**. Cualquier
   var con prefijo `VITE_` termina en el bundle del navegador igual (Vite la inyecta en build time) — va
   como **Config**, nunca Secret.
 - Previews (build o no de ramas que no son `main`): [decisión del proyecto — documentar acá cuál se tomó].
@@ -242,8 +247,7 @@ proyecto.
   para un monolito sin réplica entre sistemas; el control de acceso real es `authenticate`+
   `requirePermission`, no la unicidad del ID) — mapeados a `number` vía un helper `num()` en cada repo pg.
 - Schema de Postgres propio del proyecto, nunca `public` — `{{DB_SCHEMA}}` (derivado del nombre del
-  proyecto), fijado por `--schema --create-schema` en `node-pg-migrate` y por `search_path` en el pool de
-  runtime. Ningún `CREATE TABLE` ni query necesita calificar el nombre de tabla con el schema.
+  proyecto), fijado por `--schema --create-schema` en `node-pg-migrate` y por `SET LOCAL search_path` al abrir cada transacción de runtime (`platform/db/schema.ts`) — sin `public` en el path, compatible con poolers en transaction mode, y si falta el schema o una tabla la query falla en vez de leer otra. Ningún `CREATE TABLE` ni query necesita calificar el nombre de tabla con el schema.
 - **Idioma: todo en inglés, sin excepción** — identificadores de código Y nombres de tabla/columna/schema.
   Proyecto greenfield, sin legado que migrar — no hay razón para mezclar idiomas como sí puede justificarse
   en un proyecto que hereda un modelo de datos preexistente en otro idioma. Los documentos de spec

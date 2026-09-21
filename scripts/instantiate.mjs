@@ -239,7 +239,7 @@ function main() {
   console.log(`  cd ${path.relative(process.cwd(), destination) || '.'}`);
   console.log('  npm install');
   console.log('  npm test                 # unitarios sin Postgres, incl. module-boundaries.test.ts');
-  console.log('  cp .env.example .env      # completar DATABASE_URL, AUTH_JWT_SECRET, GOOGLE_CLIENT_ID');
+  console.log('  cp .env.example .env      # completar DATABASE_URL, DATABASE_URL_UNPOOLED, AUTH_JWT_SECRET, GOOGLE_CLIENT_ID');
   console.log('  npm run migrate            # si hay Postgres local alcanzable');
   console.log('  npm run server && npm run dev   # backend :3001, frontend :5000\n');
 }
