@@ -242,8 +242,7 @@ proyecto.
   para un monolito sin réplica entre sistemas; el control de acceso real es `authenticate`+
   `requirePermission`, no la unicidad del ID) — mapeados a `number` vía un helper `num()` en cada repo pg.
 - Schema de Postgres propio del proyecto, nunca `public` — `{{DB_SCHEMA}}` (derivado del nombre del
-  proyecto), fijado por `--schema --create-schema` en `node-pg-migrate` y por `search_path` en el pool de
-  runtime. Ningún `CREATE TABLE` ni query necesita calificar el nombre de tabla con el schema.
+  proyecto), fijado por `--schema --create-schema` en `node-pg-migrate` y por `SET LOCAL search_path` al abrir cada transacción de runtime (`platform/db/schema.ts`) — sin `public` en el path, compatible con poolers en transaction mode, y si falta el schema o una tabla la query falla en vez de leer otra. Ningún `CREATE TABLE` ni query necesita calificar el nombre de tabla con el schema.
 - **Idioma: todo en inglés, sin excepción** — identificadores de código Y nombres de tabla/columna/schema.
   Proyecto greenfield, sin legado que migrar — no hay razón para mezclar idiomas como sí puede justificarse
   en un proyecto que hereda un modelo de datos preexistente en otro idioma. Los documentos de spec

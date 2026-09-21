@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { Pool } from 'pg';
 import type { Transaction } from '../../platform/db/transaction.js';
+import { beginTransaction } from '../../platform/db/schema.js';
 
 const HAS_DB = !!process.env.DATABASE_URL;
 let pool: Pool;
@@ -18,7 +19,7 @@ afterAll(async () => {
 async function inSavepoint(body: (tx: Transaction) => Promise<void>): Promise<void> {
   const client = await pool.connect();
   try {
-    await client.query('BEGIN');
+    await beginTransaction(client);
     await client.query('SAVEPOINT sp_test');
     await body(client);
     await client.query('ROLLBACK TO SAVEPOINT sp_test');

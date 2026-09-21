@@ -90,6 +90,7 @@ consecuencias prácticas, no en preferencia estética:
 │   ├── platform/
 │   │   ├── config/env.ts
 │   │   ├── db/pool.ts
+│   │   ├── db/schema.ts
 │   │   ├── db/transaction.ts        ← tipo Transaction, cross-cutting
 │   │   ├── db/unit-of-work.ts
 │   │   └── http/session.ts          ← firma/verifica JWT, cross-cutting (ver §4)
@@ -201,7 +202,7 @@ no se fija de antemano una lista de ~20 paquetes "por si acaso".
   (derivado del nombre del proyecto — §0). Se logra sin tocar el SQL de ninguna migración: `--schema
   {{DB_SCHEMA}} --create-schema` en el comando de `node-pg-migrate` fija el `search_path` de la corrida y
   crea el schema si no existe (incluida la tabla de tracking de migraciones, que también queda ahí adentro
-  — no en `public`); el pool de runtime (`platform/db/pool.ts`) fija el mismo `search_path` en cada conexión. Ningún nombre
+  — no en `public`); en runtime, `beginTransaction` (`platform/db/schema.ts`) corre `SET LOCAL search_path TO "{{DB_SCHEMA}}"` al abrir cada transacción — no por conexión (`options`), que los poolers en transaction mode (p. ej. Neon pooled) rechazan, y sin `public` en el path: si falta el schema o una tabla la query falla con `relation ... does not exist`. Ningún nombre
   de tabla necesita ir calificado con el schema en ningún `CREATE TABLE` ni query.
 - **Catálogo de permisos plano**: tabla `permission(code TEXT PK, description TEXT)`, formato
   `recurso.acción[.calificador]`. Agregar un permiso nuevo es una fila de seed en una migración futura,
@@ -325,7 +326,8 @@ Manifiesto de archivos (path relativo a la raíz de este proyecto):
 |---|---|
 | `platform/config/env.ts` | Valida `process.env` con Zod al import — falla cerrado antes de levantar el server. |
 | `platform/db/transaction.ts` | Contrato `Transaction` — genuinamente transversal, no le pertenece a ningún módulo (§4a). |
-| `platform/db/pool.ts` | Pool de `pg`, con `search_path={{DB_SCHEMA}},public` fijo en cada conexión. |
+| `platform/db/pool.ts` | Pool de `pg` (conexión + SSL). No fija el schema — ver `schema.ts`. |
+| `platform/db/schema.ts` | `DB_SCHEMA` (`{{DB_SCHEMA}}`) y `beginTransaction`: `BEGIN` + `SET LOCAL search_path` sin `public`. |
 | `platform/db/unit-of-work.ts` | `withTransaction(fn)` — BEGIN/COMMIT/ROLLBACK reusable. |
 | `platform/http/session.ts` | `signSession`/`verifySession` — verificación vive en `platform/`, emisión en `auth` (§4b). |
 | `platform/http/authenticate.ts` | Middleware que verifica la cookie de sesión, montado global en `/api`. |

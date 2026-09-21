@@ -151,7 +151,7 @@ permisos, y el arnés de tests contra Postgres.
 - **Schema de Postgres propio por proyecto, nunca `public`** — `{{DB_SCHEMA}}` (derivado del nombre del
   proyecto, §8). Se logra con `node-pg-migrate --schema {{DB_SCHEMA}} --create-schema` (fija el
   `search_path` de la corrida y crea el schema si no existe, incluida la tabla de tracking de migraciones)
-  y con el mismo `search_path` en el pool de conexión de runtime — ningún `CREATE TABLE` ni query
+  y con `SET LOCAL search_path` en cada transacción de runtime (sin `public`, compatible con poolers en transaction mode) — ningún `CREATE TABLE` ni query
   individual necesita calificar el nombre de tabla con el schema.
 - **Idioma: todo en inglés, sin excepción** — identificadores de código y nombres de tabla/columna/schema.
   Proyecto greenfield, sin legado en otro idioma que migrar. Los documentos de spec siguen en español —
