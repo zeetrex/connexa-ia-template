@@ -13,6 +13,10 @@ import { env } from './platform/config/env.js';
 
 const app = express();
 
+// Detrás de Vercel: `req.ip` real para express-rate-limit. `1` confía sólo en
+// el hop del edge de Vercel, no en un X-Forwarded-For arbitrario del cliente.
+app.set('trust proxy', 1);
+
 app.use(cookieParser());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
