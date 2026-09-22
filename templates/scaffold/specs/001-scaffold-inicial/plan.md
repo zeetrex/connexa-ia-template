@@ -372,7 +372,8 @@ Manifiesto de archivos (path relativo a la raíz de este proyecto):
 | Archivo | Qué hace |
 |---|---|
 | `server/index.ts` | Única raíz de composición — monta todos los módulos, `.listen()` sólo si es el entrypoint directo. |
-| `api/index.ts` | Reexporta el mismo `app` para el bundling serverless de Vercel. |
+| `api/index.ts` | Reexporta el mismo `app` como export default (el handler que invoca Vercel). |
+| `vercel.json` | Rewrites `/api` y `/api/(.*)` → `/api/index`: sin ellos Vercel sólo enruta `/api` exacto y toda subruta da 404. |
 | `server/module-boundaries.test.ts` | Verificación automática de RF-16 — lee imports, falla ante cualquier violación. |
 
 ### Frontend (`src/`)
